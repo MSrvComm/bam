@@ -1,6 +1,8 @@
 go 1.19
 
 use (
-    ./producer-svc
-    ./consumer-svc
+	./producer-svc
+	./consumer-svc
+	./consumer-joiner
+	./producer-joiner
 )

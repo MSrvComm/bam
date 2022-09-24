@@ -46,7 +46,7 @@ spec:
         - name: KAFAK_ZOOKEEPER_CONNECTION_TIMEOUT_MS
           value: "6000"
         - name: KAFAK_AUTO_CREATE_TOPICS_ENABLE
-          value: "false"
+          value: "true"
         - name: KAFKA_CREATE_TOPICS
           value: "sarama_topic:2:1" # topic name: sarama_topic, 2 partitions, 1 replica
         ports:

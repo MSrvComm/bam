@@ -90,6 +90,7 @@ func pushCommentToQueue(topic string, message []byte) error {
 
 	msg := &sarama.ProducerMessage{
 		Topic: topic,
+		Partition: 2,
 		Value: sarama.StringEncoder(message),
 	}
 
