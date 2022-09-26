@@ -29,3 +29,4 @@ sudo docker build -t ratnadeepb/kafka-producer .
 [Rust producer-consumer](https://itnext.io/getting-started-with-kafka-and-rust-part-1-e0074961ec6b)
 [Kafka Consumer Group](https://medium.com/@ronnansouza/setting-up-a-kafka-broker-using-docker-creating-a-producer-and-consumer-group-with-multiple-384b724cd324)
 [Kafka Operating Modes](https://medium.com/swlh/how-to-consume-kafka-efficiently-in-golang-264f7fe2155b)
+[Java Producer Consumer](https://medium.com/pharos-production/kafka-using-java-e10bfeec8638)
