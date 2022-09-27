@@ -30,3 +30,5 @@ sudo docker build -t ratnadeepb/kafka-producer .
 [Kafka Consumer Group](https://medium.com/@ronnansouza/setting-up-a-kafka-broker-using-docker-creating-a-producer-and-consumer-group-with-multiple-384b724cd324)</br>
 [Kafka Operating Modes](https://medium.com/swlh/how-to-consume-kafka-efficiently-in-golang-264f7fe2155b)</br>
 [Java Producer Consumer](https://medium.com/pharos-production/kafka-using-java-e10bfeec8638)</br>
+[Weighted Consumer Group Assignor - Java](https://blog.devgenius.io/diving-into-kafka-partitioning-by-building-a-custom-partition-assignor-656eb99bf885)</br>
+[Lag based assignor](https://github.com/grantneale/kafka-lag-based-assignor)</br>
