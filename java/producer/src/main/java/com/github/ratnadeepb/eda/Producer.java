@@ -1,8 +1,6 @@
 package com.github.ratnadeepb.eda;
 
-import java.io.IOException;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -13,17 +11,11 @@ import org.slf4j.LoggerFactory;
 
 import com.influxdb.client.InfluxDBClient;
 
-import io.prometheus.client.Gauge;
-import io.prometheus.client.exporter.HTTPServer;
-
 /**
- * Hello world!
+ * Producer
  *
  */
 public class Producer {
-    static final Gauge records = Gauge.build().name("kafka_producer_records_total").help("Total records processed")
-            .register();
-
     private static String token = "3Ghjv-1exJYtV8U0no_u5zA9ikoa463f6B2Q5wUc2KN_n1dSuZnT3pVwfN57ZFs1eG6RnlWuHuOMJ1ze9qh2lw==";
     private static String bucket = "consumer";
     private static String org = "com.github.ratnadeepb";
@@ -39,12 +31,6 @@ public class Producer {
         props.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class.getName());
         props.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, OrderSerializer.class.getName());
         props.setProperty(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "order-producer");
-
-        try {
-            new HTTPServer.Builder().withPort(9102).build();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
         // Local order
         Order order1 = new Order();
@@ -64,12 +50,6 @@ public class Producer {
 
         KafkaProducer<Integer, Order> producer = new KafkaProducer<>(props);
         producer.initTransactions();
-        // ProducerRecord<Integer, Order> rcrd1 = new ProducerRecord<>("OrderTopic",
-        // order1);
-        // ProducerRecord<Integer, Order> rcrd2 = new ProducerRecord<>("OrderTopic",
-        // order2);
-        // ProducerRecord<Integer, Order> rcrd3 = new ProducerRecord<>("OrderTopic",
-        // order3);
 
         int i = 0;
         try {
@@ -89,14 +69,10 @@ public class Producer {
                     producer.beginTransaction();
                     producer.send(rcrd, new OrderCallback(mLogger));
                     producer.commitTransaction();
-                    records.inc();
                     dbconn.queryData(dbclient);
                 } catch (Exception e) {
                     producer.abortTransaction();
                 }
-                // producer.send(rcrd2, new OrderCallback(mLogger));
-                // producer.send(rcrd3, new OrderCallback(mLogger));
-                // Thread.sleep(100);
                 i++;
             }
         } finally {

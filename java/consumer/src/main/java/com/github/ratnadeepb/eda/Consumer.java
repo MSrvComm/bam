@@ -1,7 +1,6 @@
 package com.github.ratnadeepb.eda;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Properties;
 import java.util.Map.Entry;
@@ -21,17 +20,12 @@ import org.slf4j.LoggerFactory;
 
 import com.influxdb.client.InfluxDBClient;
 
-import io.prometheus.client.Gauge;
-
 /**
- * Hello world!
+ * Consumer
  * `
  */
 public class Consumer {
     final Logger mLogger = LoggerFactory.getLogger(Consumer.class.getName());
-    private ArrayList<Integer> keys = new ArrayList<>();
-    static final Gauge requests = Gauge.build().name("kafka_consumer_records_total").help("Total records processed")
-            .register();
 
     String token = "3Ghjv-1exJYtV8U0no_u5zA9ikoa463f6B2Q5wUc2KN_n1dSuZnT3pVwfN57ZFs1eG6RnlWuHuOMJ1ze9qh2lw==";
     String bucket = "consumer";
@@ -58,23 +52,16 @@ public class Consumer {
                 while (true) {
                     ConsumerRecords<Integer, Order> records = mConsumer.poll(Duration.ofSeconds(timeout));
                     for (ConsumerRecord<Integer, Order> rcrd : records) {
-                        if (keys.contains(rcrd.key())) {
-                            continue;
-                        } else {
-                            keys.add(rcrd.key());
-                            for (Entry<MetricName, ? extends Metric> metric : mConsumer.metrics().entrySet()) {
-                                if ("bytes-consumed-rate".equals(metric.getKey().name())) {
-                                    Double value = (Double) metric.getValue().metricValue();
-                                    mLogger.info("Reporting Metric: {}: {}", metric.getKey().name(),
-                                            value);
-                                    // boolean res = dbconn.writePointPojo(dbclient, url, value);
-                                    boolean res = dbconn.singlePointWrite(dbclient, "consumerID", value);
-                                    if (!res) {
-                                        mLogger.info("failed to load db");
-                                    }
+                        for (Entry<MetricName, ? extends Metric> metric : mConsumer.metrics().entrySet()) {
+                            if ("bytes-consumed-rate".equals(metric.getKey().name())) {
+                                Double value = (Double) metric.getValue().metricValue();
+                                mLogger.info("Reporting Metric: {}: {}", metric.getKey().name(),
+                                        value);
+                                boolean res = dbconn.singlePointWrite(dbclient, "consumerID", value);
+                                if (!res) {
+                                    mLogger.info("failed to load db");
                                 }
                             }
-                            requests.inc();
                         }
 
                         if (mLogger.isInfoEnabled()) {
@@ -152,87 +139,6 @@ public class Consumer {
     }
 
     public static void main(String[] args) {
-        // try {
-        // new HTTPServer.Builder().withPort(9102).build();
-        // } catch (IOException e) {
-        // e.printStackTrace();
-        // }
-
         new Consumer().run();
-        // final Logger mLogger = LoggerFactory.getLogger(Consumer.class.getName());
-        // final int timeout = 20;
-        // ArrayList<Integer> keys = new ArrayList<>();
-        // Properties props = new Properties();
-        // props.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
-        // "kafka-service:9092");
-        // props.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
-        // IntegerDeserializer.class.getName());
-        // props.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-        // OrderDeserializer.class.getName());
-        // props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "OrderGroup");
-        // props.setProperty(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG,
-        // CooperativeStickyAssignor.class.getName());
-        // props.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
-        // props.setProperty(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_committed");
-
-        // KafkaConsumer<Integer, Order> consumer = new KafkaConsumer<>(props);
-        // consumer.subscribe(Collections.singletonList("OrderTopic"));
-
-        // // Timer timer = new Timer();
-        // // timer.schedule(new TimerTask() {
-        // // @Override
-        // // public void run() {
-        // // for (Entry<MetricName, ? extends Metric> metric :
-        // // consumer.metrics().entrySet()) {
-        // // if ("bytes-consumed-rate".equals(metric.getKey().name()) ||
-        // // "records-consumed-rate"
-        // // .equals(metric.getKey().name()) ||
-        // // "fetch-rate".equals(metric.getKey().name())) {
-        // // mLogger.info("Reporting Metric: {}: {}", metric.getKey().name(),
-        // // metric.getValue().metricValue());
-        // // }
-        // // }
-        // // }
-        // // }, 0, 1000);
-
-        // try {
-        // while (true) {
-        // ConsumerRecords<Integer, Order> records =
-        // consumer.poll(Duration.ofSeconds(timeout));
-        // for (ConsumerRecord<Integer, Order> rcrd : records) {
-        // if (keys.contains(rcrd.key())) {
-        // continue;
-        // } else {
-        // keys.add(rcrd.key());
-        // }
-
-        // if (mLogger.isInfoEnabled()) {
-        // Order order = rcrd.value();
-        // String customerName = order.getCustomerName();
-        // int quantity = order.getQuantity();
-        // String product = order.getProduct().toString();
-        // if (quantity < 2)
-        // mLogger.info("Key: {}, Customer {} ordered {} {}", rcrd.key(), customerName,
-        // quantity,
-        // product);
-        // else
-        // mLogger.info("Key: {}, Customer {} ordered {} {}s", rcrd.key(), customerName,
-        // quantity, product);
-        // }
-        // }
-
-        // // m.setEntrySetObj(consumer.metrics().entrySet());
-
-        // // for (Entry<MetricName, ? extends Metric> metric :
-        // // consumer.metrics().entrySet()) {
-        // // if ("bytes-consumed-rate".equals(metric.getKey().name())) {
-        // // mLogger.info("Reporting Metric: {}: {}", metric.getKey().name(),
-        // // metric.getValue().metricValue());
-        // // }
-        // // }
-        // }
-        // } finally {
-        // consumer.close();
-        // }
     }
 }
