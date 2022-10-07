@@ -26,6 +26,7 @@ import com.influxdb.client.InfluxDBClient;
  */
 public class Consumer {
     final Logger mLogger = LoggerFactory.getLogger(Consumer.class.getName());
+    
 
     String token = "3Ghjv-1exJYtV8U0no_u5zA9ikoa463f6B2Q5wUc2KN_n1dSuZnT3pVwfN57ZFs1eG6RnlWuHuOMJ1ze9qh2lw==";
     String bucket = "consumer";
