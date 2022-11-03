@@ -213,7 +213,7 @@ sudo docker build -t ratnadeepb/kafka-producer .
 [Java Producer Consumer](https://medium.com/pharos-production/kafka-using-java-e10bfeec8638)</br>
 [Weighted Consumer Group Assignor - Java](https://blog.devgenius.io/diving-into-kafka-partitioning-by-building-a-custom-partition-assignor-656eb99bf885)</br>
 [Lag based assignor](https://github.com/grantneale/kafka-lag-based-assignor)</br>
-[Install Influx](https://docs.influxdata.com/influxdb/v2.4/install/?t=CLI+Setup)
-[InfluxDB Java Client](https://www.influxdata.com/blog/getting-started-java-influxdb/)
-[Java Main](https://github.com/rvsathe/JavaInfluxDBExample/blob/main/src/main/java/com/example/influxdbexample/App.java)
-[Java Influx](https://github.com/rvsathe/JavaInfluxDBExample/blob/main/src/main/java/com/example/influxdbexample/InfluxDBConnectionClass.java)
+[Install Influx](https://docs.influxdata.com/influxdb/v2.4/install/?t=CLI+Setup)</br>
+[InfluxDB Java Client](https://www.influxdata.com/blog/getting-started-java-influxdb/)</br>
+[Java Main](https://github.com/rvsathe/JavaInfluxDBExample/blob/main/src/main/java/com/example/influxdbexample/App.java)</br>
+[Java Influx](https://github.com/rvsathe/JavaInfluxDBExample/blob/main/src/main/java/com/example/influxdbexample/InfluxDBConnectionClass.java)</br>
