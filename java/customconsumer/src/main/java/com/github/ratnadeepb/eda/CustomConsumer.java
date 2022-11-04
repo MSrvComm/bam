@@ -44,7 +44,6 @@ public class CustomConsumer {
         ConsumerRunnable(CountDownLatch latch) {
             mLatch = latch;
             mConsumer = new KafkaConsumer<>(consumerProps());
-            // mConsumer.subscribe(Collections.singletonList("OrderTopic"));
             mConsumer.subscribe(Collections.singletonList("OrderTopic"), new ConsumerRebalanceListener() {
                 @Override
                 public void onPartitionsRevoked(Collection<TopicPartition> collection) {
