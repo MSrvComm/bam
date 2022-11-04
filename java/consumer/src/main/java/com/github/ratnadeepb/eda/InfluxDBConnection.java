@@ -2,6 +2,8 @@ package com.github.ratnadeepb.eda;
 
 import java.time.Instant;
 
+import org.slf4j.Logger;
+
 import com.influxdb.annotations.Column;
 import com.influxdb.annotations.Measurement;
 import com.influxdb.client.InfluxDBClient;
@@ -18,11 +20,14 @@ public class InfluxDBConnection {
 
     private String url;
 
-    public InfluxDBClient buildConnection(String url, String token, String bucket, String org) {
+    Logger mLogger;
+
+    public InfluxDBClient buildConnection(String url, String token, String bucket, String org, Logger mLogger) {
         setToken(token);
         setBucket(bucket);
         setUrl(url);
         setOrg(org);
+        this.mLogger = mLogger;
         return InfluxDBClientFactory.create(getUrl(), getToken().toCharArray(), getOrg(), getBucket());
     }
 
@@ -66,8 +71,8 @@ public class InfluxDBConnection {
                     .time(Instant.now(), WritePrecision.MS);
             writeApi.writePoint(point);
             flag = true;
-        } catch (InfluxException e) {
-            System.out.println("Exception!!" + e.getMessage());
+        } catch (InfluxException | NullPointerException e) {
+            mLogger.error("Exception!!" + e.getMessage());
         }
         return flag;
     }
