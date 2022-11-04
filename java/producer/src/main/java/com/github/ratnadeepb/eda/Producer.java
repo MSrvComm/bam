@@ -16,13 +16,15 @@ import com.influxdb.client.InfluxDBClient;
  *
  */
 public class Producer {
-    private static String token = "3Ghjv-1exJYtV8U0no_u5zA9ikoa463f6B2Q5wUc2KN_n1dSuZnT3pVwfN57ZFs1eG6RnlWuHuOMJ1ze9qh2lw==";
-    private static String bucket = "consumer";
-    private static String org = "com.github.ratnadeepb";
-    private static String url = "http://influxdb:8086";
+    // private static String token =
+    // "E_HOFq8n1wkbEjuEeqi_fb4tqElN-GBH_VaTRAhxQfamMnQZWMIKS1ADzjCYBFl_26JFJWO4rYfOMKhIjud95w==";
+    // private static String bucket = "consumer";
+    // private static String org = "com.github.ratnadeepb";
+    // private static String url = "http://influxdb:8086";
 
-    private static DBConn dbconn = new DBConn();
-    private static InfluxDBClient dbclient = dbconn.buildConnection(url, token, bucket, org);
+    // private static DBConn dbconn = new DBConn();
+    // private static InfluxDBClient dbclient = dbconn.buildConnection(url, token,
+    // bucket, org);
 
     public static void main(String[] args) throws InterruptedException {
         final Logger mLogger = LoggerFactory.getLogger(Producer.class.getName());
@@ -30,7 +32,7 @@ public class Producer {
         props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka-service:9092");
         props.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class.getName());
         props.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, OrderSerializer.class.getName());
-        props.setProperty(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "order-producer");
+        // props.setProperty(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "order-producer");
 
         // Local order
         Order order1 = new Order();
@@ -49,7 +51,7 @@ public class Producer {
         order3.setQuantity(15);
 
         KafkaProducer<Integer, Order> producer = new KafkaProducer<>(props);
-        producer.initTransactions();
+        // producer.initTransactions();
 
         int i = 0;
         try {
@@ -58,21 +60,31 @@ public class Producer {
             // System.nanoTime();) {
             while (true) {
                 ProducerRecord<Integer, Order> rcrd;
+                mLogger.info("record started");
                 if (i % 3 == 0) {
+                    mLogger.info("creating new record rem=0");
                     rcrd = new ProducerRecord<>("OrderTopic", i, order3);
+                    mLogger.info("created new record rem=0");
                 } else if (i % 3 == 2) {
                     rcrd = new ProducerRecord<>("OrderTopic", i, order2);
                 } else {
+                    mLogger.info("creating new record");
                     rcrd = new ProducerRecord<>("OrderTopic", i, order1);
                 }
-                try {
-                    producer.beginTransaction();
-                    producer.send(rcrd, new OrderCallback(mLogger));
-                    producer.commitTransaction();
-                    dbconn.queryData(dbclient);
-                } catch (Exception e) {
-                    producer.abortTransaction();
-                }
+
+                producer.send(rcrd, new OrderCallback(mLogger));
+                mLogger.info("record sent");
+
+                // dbconn.queryData(dbclient);
+
+                // try {
+                // // producer.beginTransaction();
+                // producer.send(rcrd, new OrderCallback(mLogger));
+                // // producer.commitTransaction();
+                // dbconn.queryData(dbclient);
+                // } catch (Exception e) {
+                // producer.abortTransaction();
+                // }
                 i++;
             }
         } finally {
