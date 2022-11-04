@@ -33,3 +33,8 @@ spec:
         name: consumer
         ports:
         - containerPort: 9102
+        env:
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
