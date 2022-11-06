@@ -119,6 +119,25 @@ mvn update project # update the project
 mvn generate-sources # generate source if using avro and some such
 ```
 
+## InfluxDB
+
+```bash
+cd k8s/db/influxdb
+kubectl apply -f influxdb-k8.yaml 
+```
+
+### Forwarding the service port for influxdb
+
+```bash
+kubectl port-forward svc/influxdb 8086:8086
+```
+
+### Forwarding over SSH
+
+```bash
+ssh -L 8086:localhost:8086 node0
+```
+
 ## Async Sidecar LoadBalancer
 
 ## Kafka
