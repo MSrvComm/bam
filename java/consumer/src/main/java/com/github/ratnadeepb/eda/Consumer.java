@@ -54,15 +54,27 @@ public class Consumer {
                     ConsumerRecords<Integer, Order> records = mConsumer.poll(Duration.ofSeconds(timeout));
                     for (ConsumerRecord<Integer, Order> rcrd : records) {
                         for (Entry<MetricName, ? extends Metric> metric : mConsumer.metrics().entrySet()) {
-                            if ("bytes-consumed-rate".equals(metric.getKey().name())) {
+                            String mName = metric.getKey().name();
+                            // if (mName.equals("bytes-consumed-rate")) {
+                            if (mName.equals("records-consumed-rate")) {
                                 Double value = (Double) metric.getValue().metricValue();
-                                mLogger.info("Reporting Metric: {}: {}", metric.getKey().name(),
+                                mLogger.info("Reporting Metric: {}: {}", mName,
                                         value);
                                 mLogger.info("container IP: {}", containerIP);
                                 boolean res = dbconn.singlePointWrite(dbclient, containerIP, value);
                                 if (!res) {
                                     mLogger.info("failed to load db");
                                 }
+                            }
+                        }
+
+                        for (Entry<MetricName, ? extends Metric> metric : mConsumer.metrics().entrySet()) {
+                            String mName = metric.getKey().name();
+                            // if (mName.equals("bytes-consumed-rate")) {
+                            if (mName.equals("TotalTimeMs")) {
+                                Double value = (Double) metric.getValue().metricValue();
+                                mLogger.info("TotalTimeMS: {}: {}", mName,
+                                        value);
                             }
                         }
 
@@ -73,15 +85,15 @@ public class Consumer {
                             int quantity = order.getQuantity();
                             String product = order.getProduct().toString();
 
-                            Integer sleepMS = 100;
+                            Integer sleepMS = 10;
 
                             if (key % 3 == 0) {
                                 if (Math.random() > 0.1) {
-                                    sleepMS = 500;
+                                    sleepMS = 50;
                                 }
                             } else {
                                 if (Math.random() > 0.6) {
-                                    sleepMS = 500;
+                                    sleepMS = 50;
                                 }
                             }
 
@@ -116,7 +128,7 @@ public class Consumer {
             props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "OrderGroup");
             props.setProperty(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG,
                     CooperativeStickyAssignor.class.getName());
-            // props.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+            // props.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
             // props.setProperty(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_committed");
             // props.setProperty(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, "20000");
             // props.setProperty(ConsumerConfig.REQUEST_TIMEOUT_MS_CONFIG, "22000");
