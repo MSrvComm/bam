@@ -51,6 +51,25 @@ The docker config file (`~/.docker/config.json`) has to be set up for this to wo
 
 ## Maven
 
+## Installation
+
+```bash
+sudo apt install maven -y
+```
+
+## Move maven repo
+
+Edit `~/.m2/settings.xml`:
+
+```xml
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                      https://maven.apache.org/xsd/settings-1.0.0.xsd">
+  <localRepository>/mydata/.m2</localRepository>
+</settings>
+```
+
 ### Create a project
 
 ```bash
