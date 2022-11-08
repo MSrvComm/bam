@@ -4,9 +4,9 @@ metadata:
   name: consumer-svc
 spec:
   ports:
-  - port: 8080
-    protocol: TCP
-    targetPort: 8080
+    - port: 8080
+      protocol: TCP
+      targetPort: 8080
   selector:
     app: consumer-svc
   type: LoadBalancer
@@ -28,12 +28,18 @@ spec:
         app: consumer-svc
     spec:
       containers:
-      - image: ratnadeepb/java-kafka-consumer:latest
-        name: consumer-svc
-        ports:
-        - containerPort: 8080
-        env:
-        - name: POD_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
+        - image: ratnadeepb/java-kafka-consumer:latest
+          name: consumer-svc
+          ports:
+            - containerPort: 8080
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: REPORT_DURATION
+              value: "1000"
+            - name: SLOW_MS # how long the slow requests take
+              value: "50"
+            - name: FAST_MS # how long the fast requests take
+              value: "10"
