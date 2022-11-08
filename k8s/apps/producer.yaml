@@ -4,9 +4,9 @@ metadata:
   name: producer-svc
 spec:
   ports:
-  - port: 8080
-    protocol: TCP
-    targetPort: 8080
+    - port: 8080
+      protocol: TCP
+      targetPort: 8080
   selector:
     app: producer-svc
   type: LoadBalancer
@@ -28,7 +28,14 @@ spec:
         app: producer-svc
     spec:
       containers:
-      - image: ratnadeepb/java-kafka-producer:latest
-        name: producer-svc
-        ports:
-        - containerPort: 8080
+        - image: ratnadeepb/java-kafka-producer:latest
+          name: producer-svc
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SEND_RATE
+              value: "500"
+              # - name: WAIT
+              #   value: "2"
+              # - name: WAIT_NS
+              #   value: "500000"

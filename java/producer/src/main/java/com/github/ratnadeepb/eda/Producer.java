@@ -1,6 +1,8 @@
 package com.github.ratnadeepb.eda;
 
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -28,6 +30,9 @@ public class Producer {
 
     public static void main(String[] args) throws InterruptedException {
         final Logger mLogger = LoggerFactory.getLogger(Producer.class.getName());
+        Integer sendRate = Integer.parseInt(System.getenv("SEND_RATE"));
+        // Integer wait = Integer.parseInt(System.getenv("WAIT"));
+        // Integer waitNS = Integer.parseInt(System.getenv("WAIT_NS"));
         Properties props = new Properties();
         props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka-service:9092");
         props.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class.getName());
@@ -54,42 +59,87 @@ public class Producer {
         // producer.initTransactions();
 
         int i = 0;
-        try {
-            // do this for 10 seconds
-            // for (long stop = System.nanoTime() + TimeUnit.SECONDS.toNanos(60); stop >
-            // System.nanoTime();) {
-            while (true) {
-                ProducerRecord<Integer, Order> rcrd;
-                mLogger.info("record started");
-                if (i % 3 == 0) {
-                    mLogger.info("creating new record rem=0");
-                    rcrd = new ProducerRecord<>("OrderTopic", i, order3);
-                    mLogger.info("created new record rem=0");
-                } else if (i % 3 == 2) {
-                    rcrd = new ProducerRecord<>("OrderTopic", i, order2);
-                } else {
-                    mLogger.info("creating new record");
-                    rcrd = new ProducerRecord<>("OrderTopic", i, order1);
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+
+            @Override
+            public void run() {
+                Integer sleepMS = 1000 / sendRate;
+                while (true) {
+                    int i = 0;
+                    int requestsSent = 0;
+                    ProducerRecord<Integer, Order> rcrd;
+                    mLogger.info("record started");
+                    if (i % 3 == 0) {
+                        mLogger.info("creating new record rem=0");
+                        rcrd = new ProducerRecord<>("OrderTopic", order3);
+                        mLogger.info("created new record rem=0");
+                    } else if (i % 3 == 2) {
+                        rcrd = new ProducerRecord<>("OrderTopic", order2);
+                    } else {
+                        mLogger.info("creating new record");
+                        rcrd = new ProducerRecord<>("OrderTopic", order1);
+                    }
+
+                    producer.send(rcrd, new OrderCallback(mLogger));
+                    mLogger.info("record sent");
+                    i++;
+                    requestsSent++;
+                    if (requestsSent > sendRate)
+                        break;
+                    try {
+                        Thread.sleep(sleepMS);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
-
-                producer.send(rcrd, new OrderCallback(mLogger));
-                mLogger.info("record sent");
-
-                // dbconn.queryData(dbclient);
-
-                // try {
-                // // producer.beginTransaction();
-                // producer.send(rcrd, new OrderCallback(mLogger));
-                // // producer.commitTransaction();
-                // dbconn.queryData(dbclient);
-                // } catch (Exception e) {
-                // producer.abortTransaction();
-                // }
-                i++;
             }
-        } finally {
+
+        }, 0, 1000);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             mLogger.info("Producer created {} records", i);
             producer.close();
-        }
+        }));
+
+        // try {
+        // // do this for 10 seconds
+        // // for (long stop = System.nanoTime() + TimeUnit.SECONDS.toNanos(60); stop >
+        // // System.nanoTime();) {
+        // while (true) {
+
+        // ProducerRecord<Integer, Order> rcrd;
+        // mLogger.info("record started");
+        // if (i % 3 == 0) {
+        // mLogger.info("creating new record rem=0");
+        // rcrd = new ProducerRecord<>("OrderTopic", order3);
+        // mLogger.info("created new record rem=0");
+        // } else if (i % 3 == 2) {
+        // rcrd = new ProducerRecord<>("OrderTopic", order2);
+        // } else {
+        // mLogger.info("creating new record");
+        // rcrd = new ProducerRecord<>("OrderTopic", order1);
+        // }
+
+        // producer.send(rcrd, new OrderCallback(mLogger));
+        // mLogger.info("record sent");
+
+        // // dbconn.queryData(dbclient);
+
+        // // try {
+        // // // producer.beginTransaction();
+        // // producer.send(rcrd, new OrderCallback(mLogger));
+        // // // producer.commitTransaction();
+        // // dbconn.queryData(dbclient);
+        // // } catch (Exception e) {
+        // // producer.abortTransaction();
+        // // }
+        // i++;
+        // Thread.sleep(wait, waitNS);
+        // }
+        // } finally {
+        // mLogger.info("Producer created {} records", i);
+        // producer.close();
+        // }
     }
 }
