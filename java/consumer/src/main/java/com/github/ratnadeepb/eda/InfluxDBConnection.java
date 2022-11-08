@@ -8,7 +8,9 @@ import com.influxdb.annotations.Column;
 import com.influxdb.annotations.Measurement;
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.InfluxDBClientFactory;
+import com.influxdb.client.WriteApi;
 import com.influxdb.client.WriteApiBlocking;
+import com.influxdb.client.WriteOptions;
 import com.influxdb.client.domain.WritePrecision;
 import com.influxdb.client.write.Point;
 import com.influxdb.exceptions.InfluxException;
@@ -22,13 +24,17 @@ public class InfluxDBConnection {
 
     Logger mLogger;
 
+    WriteApi writeApi;
+
     public InfluxDBClient buildConnection(String url, String token, String bucket, String org, Logger mLogger) {
         setToken(token);
         setBucket(bucket);
         setUrl(url);
         setOrg(org);
         this.mLogger = mLogger;
-        return InfluxDBClientFactory.create(getUrl(), getToken().toCharArray(), getOrg(), getBucket());
+        InfluxDBClient client = InfluxDBClientFactory.create(getUrl(), getToken().toCharArray(), getOrg(), getBucket());
+        this.writeApi = client.makeWriteApi(WriteOptions.builder().flushInterval(5_000).build());
+        return client;
     }
 
     public String getToken() {
@@ -63,13 +69,13 @@ public class InfluxDBConnection {
         this.url = url;
     }
 
-    public boolean singlePointWrite(InfluxDBClient influxDBClient, String consumerId, Double records) {
+    public boolean singlePointWrite(String consumerId, Double records) {
         boolean flag = false;
         try {
-            WriteApiBlocking writeApi = influxDBClient.getWriteApiBlocking();
+            // WriteApiBlocking writeApi = influxDBClient.getWriteApiBlocking();
             Point point = Point.measurement("consumer").addTag("consumer_id", consumerId).addField("records", records)
                     .time(Instant.now(), WritePrecision.MS);
-            writeApi.writePoint(point);
+            // writeApi.writePoint(point);
             flag = true;
         } catch (InfluxException | NullPointerException e) {
             mLogger.error("Exception!!" + e.getMessage());
@@ -80,7 +86,8 @@ public class InfluxDBConnection {
     public boolean writePointPojo(InfluxDBClient influxDBClient, String consumerId, int records) {
         boolean flag = false;
         try {
-            WriteApiBlocking writeApi = influxDBClient.getWriteApiBlocking();
+            // WriteApiBlocking writeApi = influxDBClient.getWriteApiBlocking();
+
             ConsumerSensor sensor = new ConsumerSensor();
             sensor.consumerId = consumerId;
             sensor.key = records;
