@@ -21,6 +21,7 @@ import org.apache.kafka.common.serialization.IntegerDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.influxdb.LogLevel;
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.InfluxDBClientFactory;
 import com.influxdb.client.WriteApi;
@@ -28,6 +29,8 @@ import com.influxdb.client.WriteOptions;
 import com.influxdb.client.domain.WritePrecision;
 import com.influxdb.client.write.Point;
 import com.influxdb.exceptions.InfluxException;
+
+import io.reactivex.rxjava3.core.BackpressureOverflowStrategy;
 
 /**
  * Consumer
@@ -38,14 +41,12 @@ public class Consumer {
     String token = "CzaB2UEQzhMS7rqWqWgvPOblplxbvXji1m5EzVvm4Uua3_zreTx85u-wdutwGV-uEu7h78cfqRMzI1hGEmQIFQ==";
     String bucket = "consumer";
     String org = "com.github.ratnadeepb";
-    String url = "http://influxdb:8086";
+    String url = "http://influxdb:8086?wrtieTimeout=3000";
 
     InfluxDBConnection dbconn = new InfluxDBConnection();
 
     // InfluxDBClient dbclient = dbconn.buildConnection(url, token, bucket, org,
     // mLogger);
-    InfluxDBClient dbclient = InfluxDBClientFactory.create(url, token.toCharArray(), org, bucket);
-    WriteApi writeApi = dbclient.makeWriteApi(WriteOptions.builder().flushInterval(5_000).build());
 
     private class ConsumerRunnable implements Runnable {
         private CountDownLatch mLatch;
@@ -66,6 +67,10 @@ public class Consumer {
         public void run() {
             final int timeout = 20;
             long start = System.currentTimeMillis();
+            InfluxDBClient dbclient = InfluxDBClientFactory.create(url,
+                    token.toCharArray(), org, bucket);
+            dbclient.setLogLevel(LogLevel.BASIC);
+            WriteApi writeApi = dbclient.makeWriteApi(WriteOptions.builder().flushInterval(5_000).build());
             try {
                 while (true) {
                     ConsumerRecords<Integer, Order> records = mConsumer.poll(Duration.ofSeconds(timeout));
@@ -81,7 +86,7 @@ public class Consumer {
                                             value);
                                     Point point = Point.measurement("consumer").addTag("consumer_id", containerIP)
                                             .addField("lag", value)
-                                            .time(Instant.now(), WritePrecision.MS);
+                                            .time(Instant.now(), WritePrecision.NS);
                                     writeApi.writePoint(point);
                                 }
                                 // if (mName.equals("bytes-consumed-rate")) {
@@ -91,7 +96,7 @@ public class Consumer {
                                             value);
                                     Point point = Point.measurement("consumer").addTag("consumer_id", containerIP)
                                             .addField("records", value)
-                                            .time(Instant.now(), WritePrecision.MS);
+                                            .time(Instant.now(), WritePrecision.NS);
                                     writeApi.writePoint(point);
                                     // boolean res = dbconn.singlePointWrite(containerIP, value);
                                     // if (!res) {
@@ -162,7 +167,11 @@ public class Consumer {
             props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "OrderGroup");
             props.setProperty(ConsumerConfig.PARTITION_ASSIGNMENT_STRATEGY_CONFIG,
                     CooperativeStickyAssignor.class.getName());
-            props.setProperty(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG, hostname);
+            // props.setProperty(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG, hostname);
+
+            props.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
+            props.setProperty(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "2000");
+
             // props.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
             // props.setProperty(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_committed");
             // props.setProperty(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG,
