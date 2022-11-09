@@ -64,31 +64,38 @@ public class Producer {
 
             @Override
             public void run() {
-                Integer sleepMS = 1000 / sendRate;
+                Double sleepMSdb = 1000.0 / sendRate;
+                mLogger.info("sleepMSdb: {}", sleepMSdb);
+                Integer sleepMS = sleepMSdb.intValue();
+                mLogger.info("sleepMS: {}", sleepMS);
+                Double fraction = (sleepMSdb - sleepMSdb) * 1e6;
+                Integer sleepNS = fraction.intValue();
+                mLogger.info("sleepNS: {}", sleepNS);
+
                 while (true) {
                     int i = 0;
                     int requestsSent = 0;
                     ProducerRecord<Integer, Order> rcrd;
-                    mLogger.info("record started");
+                    // mLogger.info("record started");
                     if (i % 3 == 0) {
-                        mLogger.info("creating new record rem=0");
+                        // mLogger.info("creating new record rem=0");
                         rcrd = new ProducerRecord<>("OrderTopic", order3);
-                        mLogger.info("created new record rem=0");
+                        // mLogger.info("created new record rem=0");
                     } else if (i % 3 == 2) {
                         rcrd = new ProducerRecord<>("OrderTopic", order2);
                     } else {
-                        mLogger.info("creating new record");
+                        // mLogger.info("creating new record");
                         rcrd = new ProducerRecord<>("OrderTopic", order1);
                     }
 
                     producer.send(rcrd, new OrderCallback(mLogger));
-                    mLogger.info("record sent");
+                    // mLogger.info("record sent");
                     i++;
                     requestsSent++;
                     if (requestsSent > sendRate)
                         break;
                     try {
-                        Thread.sleep(sleepMS);
+                        Thread.sleep(sleepMS, sleepNS);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
