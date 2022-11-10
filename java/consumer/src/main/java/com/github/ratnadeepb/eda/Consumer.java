@@ -41,7 +41,7 @@ public class Consumer {
     String token = "CzaB2UEQzhMS7rqWqWgvPOblplxbvXji1m5EzVvm4Uua3_zreTx85u-wdutwGV-uEu7h78cfqRMzI1hGEmQIFQ==";
     String bucket = "consumer";
     String org = "com.github.ratnadeepb";
-    String url = "http://influxdb:8086?wrtieTimeout=3000";
+    String url = "http://influxdb:8086";
 
     InfluxDBConnection dbconn = new InfluxDBConnection();
 
@@ -52,7 +52,7 @@ public class Consumer {
         private CountDownLatch mLatch;
         private KafkaConsumer<Integer, Order> mConsumer;
 
-        private String containerIP = "container_ID:" + System.getenv("POD_IP");
+        private String containerIP = "consumer_ID:" + System.getenv("POD_IP");
         private long reportDuration = Integer.parseInt(System.getenv("REPORT_DURATION"));
         private Integer slowMS = Integer.parseInt(System.getenv("SLOW_MS"));
         private Integer fastMS = Integer.parseInt(System.getenv("FAST_MS"));
@@ -75,8 +75,8 @@ public class Consumer {
                 while (true) {
                     ConsumerRecords<Integer, Order> records = mConsumer.poll(Duration.ofSeconds(timeout));
                     for (ConsumerRecord<Integer, Order> rcrd : records) {
-                        mLogger.info("Processing Record:");
                         if (System.currentTimeMillis() > start + reportDuration) {
+                            start = System.currentTimeMillis();
                             for (Entry<MetricName, ? extends Metric> metric : mConsumer.metrics().entrySet()) {
                                 String mName = metric.getKey().name();
                                 // if (mName.equals("TotalTimeMs")) {
@@ -85,7 +85,7 @@ public class Consumer {
                                     mLogger.info("Records Lag Max: {}: {}", mName,
                                             value);
                                     Point point = Point.measurement("consumer").addTag("consumer_id", containerIP)
-                                            .addField("lag", value)
+                                            .addField("lag-max", value)
                                             .time(Instant.now(), WritePrecision.NS);
                                     writeApi.writePoint(point);
                                 }
@@ -98,15 +98,18 @@ public class Consumer {
                                             .addField("records", value)
                                             .time(Instant.now(), WritePrecision.NS);
                                     writeApi.writePoint(point);
-                                    // boolean res = dbconn.singlePointWrite(containerIP, value);
-                                    // if (!res) {
-                                    // mLogger.info("failed to load db");
-                                    // }
+                                }
+                                if (mName.equals("records-lag")) {
+                                    Double value = (Double) metric.getValue().metricValue();
+                                    mLogger.info("Records Lag: {}: {}", mName,
+                                            value);
+                                    String fieldTag = "lag" + Integer.toString(rcrd.partition());
+                                    Point point = Point.measurement("consumer").addTag("consumer_id", containerIP)
+                                            .addField(fieldTag, value)
+                                            .time(Instant.now(), WritePrecision.NS);
+                                    writeApi.writePoint(point);
                                 }
                             }
-                            start = System.currentTimeMillis();
-                        } else {
-                            mLogger.info("Ignoring write");
                         }
 
                         Order order = rcrd.value();
@@ -169,8 +172,8 @@ public class Consumer {
                     CooperativeStickyAssignor.class.getName());
             // props.setProperty(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG, hostname);
 
-            props.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
-            props.setProperty(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "2000");
+            // props.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
+            // props.setProperty(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "2000");
 
             // props.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
             // props.setProperty(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_committed");
