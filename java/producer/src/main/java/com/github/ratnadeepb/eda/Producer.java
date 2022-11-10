@@ -39,6 +39,7 @@ public class Producer {
         String url = "http://influxdb:8086";
         final Logger mLogger = LoggerFactory.getLogger(Producer.class.getName());
         Integer sendRate = Integer.parseInt(System.getenv("SEND_RATE"));
+        final String containerIP = "consumer_ID:" + System.getenv("POD_IP");
         // Integer wait = Integer.parseInt(System.getenv("WAIT"));
         // Integer waitNS = Integer.parseInt(System.getenv("WAIT_NS"));
         InfluxDBClient dbclient = InfluxDBClientFactory.create(url,
@@ -126,7 +127,7 @@ public class Producer {
                                 Double value = (Double) metric.getValue().metricValue();
                                 mLogger.info("Request Rate: {}: {}", mName,
                                         value);
-                                Point point = Point.measurement("producer").addTag("consumer_id", "Producer")
+                                Point point = Point.measurement("producer").addTag("consumer_id", containerIP)
                                         .addField("rps", value)
                                         .time(Instant.now(), WritePrecision.NS);
                                 writeApi.writePoint(point);
