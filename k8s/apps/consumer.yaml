@@ -42,4 +42,4 @@ spec:
             - name: SLOW_MS # how long the slow requests take
               value: "50"
             - name: FAST_MS # how long the fast requests take
-              value: "10"
+              value: "50"
