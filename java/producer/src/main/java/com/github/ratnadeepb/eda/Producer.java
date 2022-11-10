@@ -1,38 +1,50 @@
 package com.github.ratnadeepb.eda;
 
+import java.time.Instant;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Map.Entry;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.Metric;
+import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.serialization.IntegerSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.influxdb.LogLevel;
 import com.influxdb.client.InfluxDBClient;
+import com.influxdb.client.InfluxDBClientFactory;
+import com.influxdb.client.WriteApi;
+import com.influxdb.client.WriteOptions;
+import com.influxdb.client.domain.WritePrecision;
+import com.influxdb.client.write.Point;
 
 /**
  * Producer
  *
  */
 public class Producer {
-    // private static String token =
-    // "E_HOFq8n1wkbEjuEeqi_fb4tqElN-GBH_VaTRAhxQfamMnQZWMIKS1ADzjCYBFl_26JFJWO4rYfOMKhIjud95w==";
-    // private static String bucket = "consumer";
-    // private static String org = "com.github.ratnadeepb";
-    // private static String url = "http://influxdb:8086";
-
     // private static DBConn dbconn = new DBConn();
     // private static InfluxDBClient dbclient = dbconn.buildConnection(url, token,
     // bucket, org);
 
     public static void main(String[] args) throws InterruptedException {
+        String token = "CzaB2UEQzhMS7rqWqWgvPOblplxbvXji1m5EzVvm4Uua3_zreTx85u-wdutwGV-uEu7h78cfqRMzI1hGEmQIFQ==";
+        String bucket = "producer";
+        String org = "com.github.ratnadeepb";
+        String url = "http://influxdb:8086";
         final Logger mLogger = LoggerFactory.getLogger(Producer.class.getName());
         Integer sendRate = Integer.parseInt(System.getenv("SEND_RATE"));
         // Integer wait = Integer.parseInt(System.getenv("WAIT"));
         // Integer waitNS = Integer.parseInt(System.getenv("WAIT_NS"));
+        InfluxDBClient dbclient = InfluxDBClientFactory.create(url,
+                token.toCharArray(), org, bucket);
+        dbclient.setLogLevel(LogLevel.BASIC);
+        WriteApi writeApi = dbclient.makeWriteApi(WriteOptions.builder().flushInterval(5_000).build());
         Properties props = new Properties();
         props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka-service:9092");
         props.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, IntegerSerializer.class.getName());
@@ -72,9 +84,12 @@ public class Producer {
                 Integer sleepNS = fraction.intValue();
                 mLogger.info("sleepNS: {}", sleepNS);
 
-                while (true) {
+                long start = System.currentTimeMillis();
+                int requestsSent = 0;
+
+                while (requestsSent < sendRate) {
                     int i = 0;
-                    int requestsSent = 0;
+                    requestsSent = 0;
                     ProducerRecord<Integer, Order> rcrd;
                     // mLogger.info("record started");
                     if (i % 3 == 0) {
@@ -92,14 +107,54 @@ public class Producer {
                     // mLogger.info("record sent");
                     i++;
                     requestsSent++;
-                    if (requestsSent > sendRate)
-                        break;
+                    // if (requestsSent > sendRate) {
+                    // mLogger.info("Breaking: Sent {} requests", requestsSent);
+                    // break;
+                    // }
+
                     try {
                         Thread.sleep(sleepMS, sleepNS);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
+
+                    if (System.currentTimeMillis() > start + 1000) {
+                        start = System.currentTimeMillis();
+                        for (Entry<MetricName, ? extends Metric> metric : producer.metrics().entrySet()) {
+                            String mName = metric.getKey().name();
+                            if (mName.equals("request-rate")) {
+                                Double value = (Double) metric.getValue().metricValue();
+                                mLogger.info("Request Rate: {}: {}", mName,
+                                        value);
+                                Point point = Point.measurement("producer").addTag("consumer_id", "Producer")
+                                        .addField("rps", value)
+                                        .time(Instant.now(), WritePrecision.NS);
+                                writeApi.writePoint(point);
+                            }
+                            if (mName.equals("response-rate")) {
+                                Double value = (Double) metric.getValue().metricValue();
+                                mLogger.info("Response Rate: {}: {}", mName,
+                                        value);
+                                Point point = Point.measurement("producer").addTag("consumer_id", "Producer")
+                                        .addField("response_rate", value)
+                                        .time(Instant.now(), WritePrecision.NS);
+                                writeApi.writePoint(point);
+                            }
+                            if (mName.equals("request-latency-avg")) {
+                                Double value = (Double) metric.getValue().metricValue();
+                                mLogger.info("Request latency: {}: {}", mName,
+                                        value);
+                                Point point = Point.measurement("producer").addTag("consumer_id", "Producer")
+                                        .addField("latency", value)
+                                        .time(Instant.now(), WritePrecision.NS);
+                                writeApi.writePoint(point);
+                            }
+                        }
+                    }
+                    // start = System.currentTimeMillis();
+                    // }
                 }
+                // mLogger.info("Sent {} requests", requestsSent);
             }
 
         }, 0, 1000);
@@ -109,12 +164,58 @@ public class Producer {
             producer.close();
         }));
 
+        // Double sleepMSdb = 1000.0 / sendRate;
+        // mLogger.info("sleepMSdb: {}", sleepMSdb);
+        // Integer sleepMS = sleepMSdb.intValue();
+        // mLogger.info("sleepMS: {}", sleepMS);
+        // Double fraction = (sleepMSdb - sleepMSdb) * 1e6;
+        // Integer sleepNS = fraction.intValue();
+        // mLogger.info("sleepNS: {}", sleepNS);
+
+        // long start = System.currentTimeMillis();
+        // int requestsSent = 0;
+
         // try {
         // // do this for 10 seconds
         // // for (long stop = System.nanoTime() + TimeUnit.SECONDS.toNanos(60); stop >
         // // System.nanoTime();) {
         // while (true) {
-
+        // while (true) {
+        // if ((System.currentTimeMillis() > start + 1000) || (requestsSent > sendRate))
+        // {
+        // break;
+        // }
+        // for (Entry<MetricName, ? extends Metric> metric :
+        // producer.metrics().entrySet()) {
+        // String mName = metric.getKey().name();
+        // if (mName.equals("request-rate")) {
+        // Double value = (Double) metric.getValue().metricValue();
+        // mLogger.info("Request Rate: {}: {}", mName,
+        // value);
+        // Point point = Point.measurement("producer").addTag("consumer_id", "Producer")
+        // .addField("rps", value)
+        // .time(Instant.now(), WritePrecision.NS);
+        // writeApi.writePoint(point);
+        // }
+        // if (mName.equals("response-rate")) {
+        // Double value = (Double) metric.getValue().metricValue();
+        // mLogger.info("Response Rate: {}: {}", mName,
+        // value);
+        // Point point = Point.measurement("producer").addTag("consumer_id", "Producer")
+        // .addField("response_rate", value)
+        // .time(Instant.now(), WritePrecision.NS);
+        // writeApi.writePoint(point);
+        // }
+        // if (mName.equals("request-latency-avg")) {
+        // Double value = (Double) metric.getValue().metricValue();
+        // mLogger.info("Request latency: {}: {}", mName,
+        // value);
+        // Point point = Point.measurement("producer").addTag("consumer_id", "Producer")
+        // .addField("latency", value)
+        // .time(Instant.now(), WritePrecision.NS);
+        // writeApi.writePoint(point);
+        // }
+        // }
         // ProducerRecord<Integer, Order> rcrd;
         // mLogger.info("record started");
         // if (i % 3 == 0) {
@@ -142,7 +243,18 @@ public class Producer {
         // // producer.abortTransaction();
         // // }
         // i++;
-        // Thread.sleep(wait, waitNS);
+        // // Thread.sleep(sleepMS, sleepNS);
+        // requestsSent++;
+        // // mLogger.info("Sent {} requests", requestsSent);
+        // // requestsSent = 0;
+        // }
+        // if (System.currentTimeMillis() < start + 1000) {
+        // Thread.sleep(start + 1000 - System.currentTimeMillis());
+        // }
+        // mLogger.info("Sent {} requests", requestsSent);
+        // start = System.currentTimeMillis();
+        // requestsSent = 0;
+        // i = 0;
         // }
         // } finally {
         // mLogger.info("Producer created {} records", i);
