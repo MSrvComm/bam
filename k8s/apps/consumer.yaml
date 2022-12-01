@@ -18,7 +18,7 @@ metadata:
     app: consumer-svc
   name: consumer-svc
 spec:
-  replicas: 10
+  replicas: 5
   selector:
     matchLabels:
       app: consumer-svc
@@ -39,7 +39,9 @@ spec:
                   fieldPath: status.podIP
             - name: REPORT_DURATION
               value: "1000"
+            - name: INFLUXDB_TOKEN
+              value: "n5z-MoDmPFXnDacCSquqibIZnOq3ziXaWfRRwBpV_-mjurYwQd30h0E4dn9S-t4u5-iuitaZsOL4UtVeMdE6Vw=="
             - name: SLOW_MS # how long the slow requests take
-              value: "50"
+              value: "10"
             - name: FAST_MS # how long the fast requests take
-              value: "50"
+              value: "10"

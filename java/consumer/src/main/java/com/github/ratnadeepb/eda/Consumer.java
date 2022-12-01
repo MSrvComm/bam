@@ -38,7 +38,9 @@ import io.reactivex.rxjava3.core.BackpressureOverflowStrategy;
 public class Consumer {
     final Logger mLogger = LoggerFactory.getLogger(Consumer.class.getName());
 
-    String token = "CzaB2UEQzhMS7rqWqWgvPOblplxbvXji1m5EzVvm4Uua3_zreTx85u-wdutwGV-uEu7h78cfqRMzI1hGEmQIFQ==";
+    // String token =
+    // "CzaB2UEQzhMS7rqWqWgvPOblplxbvXji1m5EzVvm4Uua3_zreTx85u-wdutwGV-uEu7h78cfqRMzI1hGEmQIFQ==";
+    String token = System.getenv("INFLUXDB_TOKEN");
     String bucket = "consumer";
     String org = "com.github.ratnadeepb";
     String url = "http://influxdb:8086";
@@ -120,15 +122,20 @@ public class Consumer {
 
                         Integer sleepMS = fastMS;
 
-                        // if (key % 3 == 0) {
+                        // // if (key % 3 == 0) {
+                        // if (customerName.equals("Deep")) {
+                        // if (Math.random() > 0.1) {
+                        // sleepMS = slowMS;
+                        // }
+                        // } else {
+                        // if (Math.random() > 0.6) {
+                        // sleepMS = slowMS;
+                        // }
+                        // }
                         if (customerName.equals("Deep")) {
-                            if (Math.random() > 0.1) {
-                                sleepMS = slowMS;
-                            }
+                            sleepMS = slowMS;
                         } else {
-                            if (Math.random() > 0.6) {
-                                sleepMS = slowMS;
-                            }
+                            sleepMS = fastMS;
                         }
 
                         Thread.sleep(sleepMS);

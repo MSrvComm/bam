@@ -33,7 +33,9 @@ public class Producer {
     // bucket, org);
 
     public static void main(String[] args) throws InterruptedException {
-        String token = "CzaB2UEQzhMS7rqWqWgvPOblplxbvXji1m5EzVvm4Uua3_zreTx85u-wdutwGV-uEu7h78cfqRMzI1hGEmQIFQ==";
+        // String token =
+        // "CzaB2UEQzhMS7rqWqWgvPOblplxbvXji1m5EzVvm4Uua3_zreTx85u-wdutwGV-uEu7h78cfqRMzI1hGEmQIFQ==";
+        String token = System.getenv("INFLUXDB_TOKEN");
         String bucket = "producer";
         String org = "com.github.ratnadeepb";
         String url = "http://influxdb:8086";

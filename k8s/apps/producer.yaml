@@ -38,7 +38,9 @@ spec:
                 fieldRef:
                   fieldPath: status.podIP
             - name: SEND_RATE
-              value: "210"
+              value: "700"
+            - name: INFLUXDB_TOKEN
+              value: "n5z-MoDmPFXnDacCSquqibIZnOq3ziXaWfRRwBpV_-mjurYwQd30h0E4dn9S-t4u5-iuitaZsOL4UtVeMdE6Vw=="
               # - name: WAIT
               #   value: "2"
               # - name: WAIT_NS
